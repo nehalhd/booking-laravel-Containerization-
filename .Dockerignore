@@ -1,0 +1,28 @@
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Laravel
+vendor
+storage/logs
+storage/framework/cache/data
+storage/framework/views
+storage/framework/sessions
+
+# Docker files
+docker-compose.yml
+Dockerfile
+docker/
+docker*
+
+# Git
+.git
+.gitignore
+
+# OS / Editor
+*.swp
+*.swo
+.DS_Store
+.idea
+.vscode

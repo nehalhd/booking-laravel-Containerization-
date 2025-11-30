@@ -1,0 +1,106 @@
+# version: '3.9'
+
+services:
+
+
+  # 1) PHP-FPM (Laravel App)
+
+  app:
+    build:
+      context: ./docker/app
+      dockerfile: Dockerfile
+    container_name: booking_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+    networks:
+      - booking_net
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      APP_KEY: ${APP_KEY}
+      DB_HOST: db
+      DB_DATABASE: booking
+      DB_USERNAME: root
+      DB_PASSWORD: secret
+      CACHE_DRIVER: file
+      SESSION_DRIVER: file
+
+
+  # 2) Nginx Web Server
+  nginx:
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    container_name: booking_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - booking_net
+
+
+  # 3) MySQL Database
+  db:
+    image: mysql:8
+    container_name: booking_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: booking
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - booking_net
+
+
+  # 4) Node Builder (Optional)
+  node:
+    build:
+      context: .
+      dockerfile: ./docker/node/Dockerfile
+    container_name: booking_node
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    command: sh -c "npm install && npm run build"
+    networks:
+      - booking_net
+
+# 5) Seeded Data (Optional)
+  artisan:
+    build:
+      context: .
+      dockerfile: ./docker/app/Dockerfile
+    container_name: booking_artisan
+    depends_on:
+      - db
+    command: >
+      sh -c "
+        php artisan migrate --force &&
+        php artisan db:seed --force
+      "
+    environment:
+      DB_HOST: db
+      DB_DATABASE: booking
+      DB_USERNAME: root
+      DB_PASSWORD: secret
+
+
+# Networks + Volumes
+networks:
+  booking_net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+
