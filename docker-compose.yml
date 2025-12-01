@@ -84,16 +84,34 @@ services:
     container_name: booking_artisan
     depends_on:
       - db
+    volumes:
+      - ./docker/scripts/wait-for-it.sh:/usr/src/app/wait-for-it.sh
     command: >
       sh -c "
-        php artisan migrate --force &&
-        php artisan db:seed --force
+        echo 'Waiting for DB...' &&
+        bash /usr/src/app/wait-for-it.sh db:3306 -- php artisan migrate --force &&
+        php artisan db:seed --class=PermissionSeeder --force &&
+        php artisan db:seed --class=RoleSeeder --force &&
+        php artisan db:seed --class=RoleHasPermissionSeeder --force
       "
+    # volumes:
+    #   - ./docker/scripts/wait-for-it.sh:/usr/local/bin/wait-for-it.sh
+    # command: >
+    #   sh -c "
+    #     echo 'Waiting for DB...' &&
+    #     /usr/local/bin/wait-for-it.sh db:3306 -- php artisan migrate --force &&
+    #     php artisan db:seed --class=PermissionSeeder --force &&
+    #     php artisan db:seed --class=RoleSeeder --force &&
+    #     php artisan db:seed --class=RoleHasPermissionSeeder --force
+    #   "
     environment:
-      DB_HOST: db
-      DB_DATABASE: booking
-      DB_USERNAME: root
-      DB_PASSWORD: secret
+      DB_HOST: "db"
+      DB_PORT: "3306"
+      DB_DATABASE: "booking"
+      DB_USERNAME: "root"
+      DB_PASSWORD: "secret"
+    networks:
+      - booking_net
 
 
 # Networks + Volumes

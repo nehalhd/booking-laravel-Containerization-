@@ -4,7 +4,7 @@ FROM nginx:stable-alpine
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy custom optimized config
-COPY ./docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+# COPY ./docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 # Copy public files only
 COPY . /var/www/html
