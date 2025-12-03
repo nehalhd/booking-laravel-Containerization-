@@ -2,7 +2,6 @@
 
 services:
 
-
   # 1) PHP-FPM (Laravel App)
 
   app:
@@ -15,16 +14,13 @@ services:
     volumes:
       - .:/var/www/html
       - /var/www/html/vendor
+      - frontend_assets:/var/www/html/public
+    env_file:
+      - ./.env
     networks:
       - booking_net
     environment:
-      APP_ENV: local
-      APP_DEBUG: true
       APP_KEY: ${APP_KEY}
-      DB_HOST: db
-      DB_DATABASE: booking
-      DB_USERNAME: root
-      DB_PASSWORD: secret
       CACHE_DRIVER: file
       SESSION_DRIVER: file
 
@@ -63,7 +59,7 @@ services:
       - booking_net
 
 
-  # 4) Node Builder (Optional)
+  # 4) Node Builder (for frontend assets)
   node:
     build:
       context: .
@@ -71,48 +67,9 @@ services:
     container_name: booking_node
     working_dir: /var/www/html
     volumes:
-      - .:/var/www/html
-    command: sh -c "npm install && npm run build"
+      - frontend_assets:/app/public
     networks:
       - booking_net
-
-# 5) Seeded Data (Optional)
-  artisan:
-    build:
-      context: .
-      dockerfile: ./docker/app/Dockerfile
-    container_name: booking_artisan
-    depends_on:
-      - db
-    volumes:
-      - ./docker/scripts/wait-for-it.sh:/usr/src/app/wait-for-it.sh
-    command: >
-      sh -c "
-        echo 'Waiting for DB...' &&
-        bash /usr/src/app/wait-for-it.sh db:3306 -- php artisan migrate --force &&
-        php artisan db:seed --class=PermissionSeeder --force &&
-        php artisan db:seed --class=RoleSeeder --force &&
-        php artisan db:seed --class=RoleHasPermissionSeeder --force
-      "
-    # volumes:
-    #   - ./docker/scripts/wait-for-it.sh:/usr/local/bin/wait-for-it.sh
-    # command: >
-    #   sh -c "
-    #     echo 'Waiting for DB...' &&
-    #     /usr/local/bin/wait-for-it.sh db:3306 -- php artisan migrate --force &&
-    #     php artisan db:seed --class=PermissionSeeder --force &&
-    #     php artisan db:seed --class=RoleSeeder --force &&
-    #     php artisan db:seed --class=RoleHasPermissionSeeder --force
-    #   "
-    environment:
-      DB_HOST: "db"
-      DB_PORT: "3306"
-      DB_DATABASE: "booking"
-      DB_USERNAME: "root"
-      DB_PASSWORD: "secret"
-    networks:
-      - booking_net
-
 
 # Networks + Volumes
 networks:
@@ -121,4 +78,5 @@ networks:
 
 volumes:
   mysql_data:
+  frontend_assets:
 
